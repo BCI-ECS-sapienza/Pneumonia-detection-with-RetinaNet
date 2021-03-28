@@ -15,8 +15,8 @@ The labelled dataset of the chest X-ray images and patients metadata was publicl
 -  The class ”No Lung Opacity / Not Normal” illustrated data for patients with visible on CXR lung opacity regions, but without diagnosed pneumonia.
 
 
-Once preprocessed the dataset, we built a *RetinaNet* based model, with the following characteristics:
-- a
+Once preprocessed the dataset, we built a Pytorch *RetinaNet*-based model, with the following modifications, inherited from the paper:
+
 
 
 

@@ -3,13 +3,14 @@ import os
 import numpy as np
 import pandas as pd
 import collections
+import pickle
 import torch
 
 from torch.utils.data import Dataset, DataLoader
 from dataloader import CXRimages, collater2d
 from RetinaNet.retinanet import RetinaNet
-from RetinaNet.encoder_resnet import resnet50 
-# import all encoders
+from RetinaNet import encoder_resnet as resnet50 
+# IMPORT ALL ENCODERS
 
 import torch.optim as lr_scheduler
 from torch import nn, optim
@@ -22,10 +23,75 @@ BATCH_SIZE = 8
 LABELS_CSV = ''
 IMAGES_DIR = ''
 CHECKPOINTS = './checkpoints'
+PREDICTIONS = './predictions'
 AUGMENTATION = "resize_only"
 ENCODER = "resnet50"
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+
+def validation(
+    retinanet: nn.Module, 
+    dataloader_valid: nn.Module, 
+    epoch_num: int, 
+    predictions_dir: str, 
+    save_oof=True,
+) -> tuple:
+
+    with torch.no_grad():
+        retinanet.eval()
+        loss_hist_valid, loss_cls_hist_valid, loss_cls_global_hist_valid, loss_reg_hist_valid = [],[],[],[]
+        data_iter = tqdm(enumerate(dataloader_valid), total=len(dataloader_valid))
+
+        if save_oof:
+            oof = collections.defaultdict(list)
+            
+        for iter_num, data in data_iter:
+            (
+              classification_loss,
+              regression_loss,
+              global_classification_loss,
+              nms_scores,
+              global_class,
+              transformed_anchors,
+            ) = retinanet(
+                [
+                    data["img"].cuda().float(),
+                    data["annot"].cuda().float(),
+                    data["category"].cuda(),
+                ],
+                return_loss=True,
+                return_boxes=True,
+            )
+
+            if save_oof:
+                # predictions
+                oof["gt_boxes"].append(data["annot"].cpu().numpy().copy())
+                oof["gt_category"].append(data["category"].cpu().numpy().copy())
+                oof["boxes"].append(transformed_anchors.cpu().numpy().copy())
+                oof["scores"].append(nms_scores.cpu().numpy().copy())
+                oof["category"].append(global_class.cpu().numpy().copy())
+
+            # get losses
+            classification_loss = classification_loss.mean()
+            regression_loss = regression_loss.mean()
+            global_classification_loss = global_classification_loss.mean()
+            loss = classification_loss + regression_loss + global_classification_loss * 0.1
+
+            # loss history
+            loss_hist_valid.append(float(loss))
+            loss_cls_hist_valid.append(float(classification_loss))
+            loss_cls_global_hist_valid.append(float(global_classification_loss))
+            loss_reg_hist_valid.append(float(regression_loss))
+            data_iter.set_description(
+                f"{epoch_num} cls: {np.mean(loss_cls_hist_valid):1.4f} cls g: {np.mean(loss_cls_global_hist_valid):1.4f} Reg: {np.mean(loss_reg_hist_valid):1.4f} Loss {np.mean(loss_hist_valid):1.4f}"
+            )
+            del classification_loss
+            del regression_loss
+
+        if save_oof:  # save predictions
+            pickle.dump(oof, open(f"{predictions_dir}/{epoch_num:03}.pkl", "wb"))
+
+    return loss_hist_valid, loss_cls_hist_valid, loss_cls_global_hist_valid, loss_reg_hist_valid
 
 
 def train(
@@ -47,9 +113,10 @@ def train(
   elif model_name == 'xception':
     retinanet = xception(1, pretrained)
 
-  # TODO crea cartelle checkpoints
   checkpoints_dir = CHECKPOINTS
+  predictions_dir = PREDICTIONS
   os.makedirs(checkpoints_dir, exist_ok=True)
+  os.makedirs(predictions_dir, exist_ok=True)
   
   # load weights to continue training
   if resume_weights != "":
@@ -67,9 +134,6 @@ def train(
     optimizer, patience=4, verbose=True, factor=0.2
   )
   scheduler_by_epoch = False
-  
-  # ADDED FROM OTHER FILES
-  loss_hist = []
 
   #for epoch_num in range(resume_epoch+1, epochs):
   for epoch_num in range(epochs):  
@@ -93,8 +157,8 @@ def train(
         optimizer.zero_grad()
 
         inputs = [
-                  data['img'].cuda().float(),      #image
-                  data['annot'].cuda().float(),    #boxes
+                  data['img'].cuda().float(),      
+                  data['annot'].cuda().float(),    
                   data['category'].cuda()
         ]
 
@@ -115,20 +179,17 @@ def train(
         loss_cls_hist.append(float(classification_loss))
         loss_cls_global_hist.append(float(global_classification_loss))
         loss_reg_hist.append(float(regression_loss))
-
-        loss_hist.append(float(loss)) #preso da altro file
         epoch_loss.append(float(loss))
         
         print(
           'Epoch: {} | Iteration: {} | \n\t\tClassification loss: {:1.5f} | Regression loss: {:1.5f} | \n\t\tGlobal loss: {:1.5f} | Running loss: {:1.5f}'.format(
-            epoch_num, iter_num, float(classification_loss), float(regression_loss), float(global_classification_loss), np.mean(loss_hist))
+            epoch_num, iter_num, float(classification_loss), float(regression_loss), float(global_classification_loss), np.mean(epoch_loss))
         )
 
         del classification_loss
         del regression_loss
 
-    #TODO save model checkpoints 
-    #torch.save(retinanet.module, f"{checkpoints_dir}/{model_name}_{epoch_num:03}.pt")
+    torch.save(retinanet.module, f"{checkpoints_dir}/{model_name}_{epoch_num:03}.pt")
 
     # validation
     (
@@ -150,10 +211,12 @@ def train(
     #  "loss_valid_global_classification", np.mean(loss_cls_global_hist_valid), epoch_num,
     #)
     #logger.scalar_summary("loss_valid_regression", np.mean(loss_reg_hist_valid), epoch_num)
-  
-    #scheduler.step(np.mean(loss_reg_hist_valid))
-  
 
+    if scheduler_by_epoch:
+        scheduler.step(epoch=epoch_num)
+    else:
+        scheduler.step(np.mean(loss_reg_hist_valid))
+  
   retinanet.eval()
   torch.save(retinanet, f"{checkpoints_dir}/{model_name}_final.pt")
 
@@ -200,7 +263,7 @@ def main():
 if __name__ == "__main__":
 
   if len(sys.argv[1:]) <2:
-    print('USAGE: python train.py [labels_csv_path] [images_dir_path] [checkpoints_path] {[augmentation_level]} {[encoder]} \
+    print('USAGE: python3 train.py [labels_csv_path] [images_dir_path] [checkpoints_path] {[augmentation_level]} {[encoder]} \
           \n Augmentation levels: resize_only (default), light, heavy, heavy_with_rotations \
           \n Encoders: resnet_50 (default), se_resnext50, pnasnet5, xception')
     sys.exit(1)

@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 
 # check the path!
-LABELS_CSV = open('stage_2_train_labels.csv')
-CLASS_INFO_CSV = open('stage_2_detailed_class_info.csv')
+LABELS_CSV = open('./dataset/stage_2_train_labels.csv')
+CLASS_INFO_CSV = open('./dataset/stage_2_detailed_class_info.csv')
 sample = False
 n_samples = 300
 
@@ -16,7 +16,7 @@ if len(sys.argv[1:]) > 0:
             n_samples = int(sys.argv[2])
 
     if (sys.argv[1] == "-h"):
-        print(' Normal usage: python merge_dataset_script.py \n For sample: python merge_dataset_script.py -sample [#samples] \n (#samples default value = 100)')
+        print(' Normal usage: python3 merge_dataset_script.py \n For sample: python3 merge_dataset_script.py -sample [#samples] \n (#samples default value = 100)')
         sys.exit(1)
 
 
@@ -39,10 +39,10 @@ train_labels_df = train_labels_df.drop_duplicates()
 
 if sample:
     sample_df = train_labels_df.sample(n_samples)
-    sample_df.to_csv(path_or_buf='sampled_labels.csv', index=False)
+    sample_df.to_csv(path_or_buf='./dataset/sampled_labels.csv', index=False)
     print(sample_df.count())
     print(sample_df[:20])
 else:
-    train_labels_df.to_csv(path_or_buf='merged_labels.csv', index=False)
+    train_labels_df.to_csv(path_or_buf='./dataset/merged_labels.csv', index=False)
     print(train_labels_df.count())
     print(train_labels_df[:20])

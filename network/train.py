@@ -9,7 +9,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from dataloader import CXRimages, collater2d
 from RetinaNet.retinanet import RetinaNet
-from RetinaNet import encoder_resnet as resnet50 
+from RetinaNet.encoder_resnet import resnet50 
 # IMPORT ALL ENCODERS
 
 import torch.optim as lr_scheduler

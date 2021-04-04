@@ -8,6 +8,7 @@ import torch
 
 from torch.utils.data import Dataset, DataLoader
 from dataloader import CXRimages, collater2d
+from utils.logger import 
 from RetinaNet.retinanet import RetinaNet
 from RetinaNet.encoder_resnet import resnet50 
 # IMPORT ALL ENCODERS
@@ -22,10 +23,14 @@ BATCH_SIZE = 8
 
 LABELS_CSV = ''
 IMAGES_DIR = ''
-CHECKPOINTS = './checkpoints'
-PREDICTIONS = './predictions'
+
 AUGMENTATION = "resize_only"
 ENCODER = "resnet50"
+
+CHECKPOINTS = './checkpoints/'
+PREDICTIONS = './predictions'
+TENSORBOARD = './tensorboard'
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -117,11 +122,14 @@ def train(
   elif model_name == 'xception':
     retinanet = xception(1, pretrained)
 
-  checkpoints_dir = CHECKPOINTS
-  predictions_dir = PREDICTIONS
+  checkpoints_dir = f'/{CHECKPOINTS}/{AUGMENTATION}_{ENCODER}'
+  predictions_dir = f'/{PREDICTIONS}/{AUGMENTATION}_{ENCODER}'
+  tensorboard_dir = f'/{TENSORBOARD}/{AUGMENTATION}_{ENCODER}'
   os.makedirs(checkpoints_dir, exist_ok=True)
   os.makedirs(predictions_dir, exist_ok=True)
-  
+  os.makedirs(tensorboard_dir, exist_ok=True)
+  logger = Logger(tensorboard_dir)
+
   # load weights to continue training
   if resume_weights != "":
     print("load model from: ", resume_weights)
@@ -194,6 +202,12 @@ def train(
         del regression_loss
 
     torch.save(retinanet.module, f"{checkpoints_dir}/{model_name}_{epoch_num:03}.pt")
+    logger.scalar_summary("loss_train", np.mean(epoch_loss), epoch_num)
+    logger.scalar_summary("loss_train_classification", np.mean(loss_cls_hist), epoch_num)
+    logger.scalar_summary(
+        "loss_train_global_classification", np.mean(loss_cls_global_hist), epoch_num
+    )
+    logger.scalar_summary("loss_train_regression", np.mean(loss_reg_hist), epoch_num)
 
     # validation
     (
@@ -209,12 +223,12 @@ def train(
     )
   
     # log validation loss history
-    #logger.scalar_summary("loss_valid", np.mean(loss_hist_valid), epoch_num)
-    #logger.scalar_summary("loss_valid_classification", np.mean(loss_cls_hist_valid), epoch_num)
-    #logger.scalar_summary(
-    #  "loss_valid_global_classification", np.mean(loss_cls_global_hist_valid), epoch_num,
-    #)
-    #logger.scalar_summary("loss_valid_regression", np.mean(loss_reg_hist_valid), epoch_num)
+    logger.scalar_summary("loss_valid", np.mean(loss_hist_valid), epoch_num)
+    logger.scalar_summary("loss_valid_classification", np.mean(loss_cls_hist_valid), epoch_num)
+    logger.scalar_summary(
+      "loss_valid_global_classification", np.mean(loss_cls_global_hist_valid), epoch_num,
+    )
+    logger.scalar_summary("loss_valid_regression", np.mean(loss_reg_hist_valid), epoch_num)
 
     if scheduler_by_epoch:
         scheduler.step(epoch=epoch_num)

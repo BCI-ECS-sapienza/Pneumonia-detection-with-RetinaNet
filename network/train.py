@@ -55,9 +55,9 @@ def validation(
               transformed_anchors,
             ) = retinanet(
                 [
-                    data["img"].cuda().float(),
-                    data["annot"].cuda().float(),
-                    data["category"].cuda(),
+                    data["img"].to(device).float(),
+                    data["annot"].to(device).float(),
+                    data["category"].to(device),
                 ],
                 return_loss=True,
                 return_boxes=True,
@@ -125,11 +125,11 @@ def train(
   # load weights to continue training
   if resume_weights != "":
     print("load model from: ", resume_weights)
-    retinanet = torch.load(resume_weights).cuda()
+    retinanet = torch.load(resume_weights).to(device)
   else:
     retinanet = retinanet.to(device)
   
-  retinanet = torch.nn.DataParallel(retinanet).cuda()
+  retinanet = torch.nn.DataParallel(retinanet).to(device)
 
   retinanet.training = True
   optimizer = optim.Adam(retinanet.parameters(), lr=1e-5)
@@ -161,9 +161,9 @@ def train(
         optimizer.zero_grad()
 
         inputs = [
-                  data['img'].cuda().float(),      
-                  data['annot'].cuda().float(),    
-                  data['category'].cuda()
+                  data['img'].to(device).float(),      
+                  data['annot'].to(device).float(),    
+                  data['category'].to(device)
         ]
 
         (classification_loss, regression_loss, global_classification_loss,) = retinanet(

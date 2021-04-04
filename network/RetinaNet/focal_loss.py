@@ -2,6 +2,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def calc_iou(a, b):
     area = (b[:, 2] - b[:, 0]) * (b[:, 3] - b[:, 1])
 
@@ -50,7 +52,7 @@ class FocalLoss(nn.Module):
 
             if bbox_annotation.shape[0] == 0:
                 if torch.cuda.is_available():
-                    alpha_factor = torch.ones(classification.shape).cuda() * alpha
+                    alpha_factor = torch.ones(classification.shape).to(device) * alpha
 
                     alpha_factor = 1. - alpha_factor
                     focal_weight = classification
@@ -90,7 +92,7 @@ class FocalLoss(nn.Module):
             targets = torch.ones(classification.shape) * -1
 
             if torch.cuda.is_available():
-                targets = targets.cuda()
+                targets = targets.to(device)
 
             targets[torch.lt(IoU_max, 0.4), :] = 0
 
@@ -104,7 +106,7 @@ class FocalLoss(nn.Module):
             targets[positive_indices, assigned_annotations[positive_indices, 4].long()] = 1
 
             if torch.cuda.is_available():
-                alpha_factor = torch.ones(targets.shape).cuda() * alpha
+                alpha_factor = torch.ones(targets.shape).to(device) * alpha
             else:
                 alpha_factor = torch.ones(targets.shape) * alpha
 
@@ -118,7 +120,7 @@ class FocalLoss(nn.Module):
             cls_loss = focal_weight * bce
 
             if torch.cuda.is_available():
-                cls_loss = torch.where(torch.ne(targets, -1.0), cls_loss, torch.zeros(cls_loss.shape).cuda())
+                cls_loss = torch.where(torch.ne(targets, -1.0), cls_loss, torch.zeros(cls_loss.shape).to(device))
             else:
                 cls_loss = torch.where(torch.ne(targets, -1.0), cls_loss, torch.zeros(cls_loss.shape))
 
@@ -152,7 +154,7 @@ class FocalLoss(nn.Module):
                 targets = targets.t()
 
                 if torch.cuda.is_available():
-                    targets = targets/torch.Tensor([[0.1, 0.1, 0.2, 0.2]]).cuda()
+                    targets = targets/torch.Tensor([[0.1, 0.1, 0.2, 0.2]]).to(device)
                 else:
                     targets = targets/torch.Tensor([[0.1, 0.1, 0.2, 0.2]])
 
@@ -168,7 +170,7 @@ class FocalLoss(nn.Module):
                 regression_losses.append(regression_loss.mean())
             else:
                 if torch.cuda.is_available():
-                    regression_losses.append(torch.tensor(0).float().cuda())
+                    regression_losses.append(torch.tensor(0).float().to(device))
                 else:
                     regression_losses.append(torch.tensor(0).float())
 

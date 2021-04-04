@@ -10,6 +10,8 @@ from .anchors import Anchors
 from .focal_loss import FocalLoss
 from .retinanet import RetinaNet, RetinaNetEncoder
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class Bottleneck(nn.Module):
     expansion = 4

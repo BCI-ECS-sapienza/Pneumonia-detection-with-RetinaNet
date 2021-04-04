@@ -9,6 +9,8 @@ from .boxes import BBoxTransform, ClipBoxes
 from .anchors import Anchors
 from .focal_loss import FocalLoss
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def nms(boxes, overlap, top_k=200):
     """Apply non-maximum suppression at test time to avoid detecting too many
     overlapping bounding boxes for a given object.

@@ -65,7 +65,8 @@ def get_image_array(image_path):
     img = dcm_data.pixel_array
     return img
   except:
-      pass
+    print(f'error image:{image_path} load')
+    pass
 
 
 def parse_one_annot(box_coord, filename):

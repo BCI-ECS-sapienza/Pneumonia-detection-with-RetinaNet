@@ -82,8 +82,12 @@ def validation(
             loss_cls_hist_valid.append(float(classification_loss))
             loss_cls_global_hist_valid.append(float(global_classification_loss))
             loss_reg_hist_valid.append(float(regression_loss))
-            data_iter.set_description(
-                f"{epoch_num} cls: {np.mean(loss_cls_hist_valid):1.4f} cls g: {np.mean(loss_cls_global_hist_valid):1.4f} Reg: {np.mean(loss_reg_hist_valid):1.4f} Loss {np.mean(loss_hist_valid):1.4f}"
+            #data_iter.set_description(
+            #    f"{epoch_num} cls: {np.mean(loss_cls_hist_valid):1.4f} cls g: {np.mean(loss_cls_global_hist_valid):1.4f} Reg: {np.mean(loss_reg_hist_valid):1.4f} Loss {np.mean(loss_hist_valid):1.4f}"
+            #)
+            print(
+              'Epoch: {} | Iteration: {} | \n\t\tClassification loss: {:1.5f} | Regression loss: {:1.5f} | \n\t\tGlobal loss: {:1.5f} | Running loss: {:1.5f}'.format(
+                epoch_num, iter_num, float(np.mean(loss_cls_hist_valid)), float(np.mean(loss_reg_hist_valid)), float(np.mean(loss_cls_global_hist_valid)), np.mean(loss_hist_valid))
             )
             del classification_loss
             del regression_loss

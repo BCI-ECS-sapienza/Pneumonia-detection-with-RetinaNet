@@ -6,7 +6,7 @@ import pandas as pd
 LABELS_CSV = open('./dataset/stage_2_train_labels.csv')
 CLASS_INFO_CSV = open('./dataset/stage_2_detailed_class_info.csv')
 sample = False
-n_samples = 300
+n_samples = 100
 
 
 if len(sys.argv[1:]) > 0:

@@ -38,65 +38,67 @@ def validation(
     save_oof=True,
 ) -> tuple:
 
-    with torch.no_grad():
-        retinanet.eval()
-        loss_hist_valid, loss_cls_hist_valid, loss_cls_global_hist_valid, loss_reg_hist_valid = [],[],[],[]
-        data_iter = tqdm(enumerate(dataloader_valid), total=len(dataloader_valid))
+  print(f'START VALIDATION EPOCH {epoch_num}')
+  with torch.no_grad():
+      retinanet.eval()
+      loss_hist_valid, loss_cls_hist_valid, loss_cls_global_hist_valid, loss_reg_hist_valid = [],[],[],[]
+      data_iter = tqdm(enumerate(dataloader_valid), total=len(dataloader_valid))
 
-        if save_oof:
-            oof = collections.defaultdict(list)
-            
-        for iter_num, data in data_iter:
-            (
-              classification_loss,
-              regression_loss,
-              global_classification_loss,
-              nms_scores,
-              global_class,
-              transformed_anchors,
-            ) = retinanet(
-                [
-                    data["img"].to(device).float(),
-                    data["annot"].to(device).float(),
-                    data["category"].to(device),
-                ],
-                return_loss=True,
-                return_boxes=True,
-            )
+      if save_oof:
+          oof = collections.defaultdict(list)
+          
+      for iter_num, data in data_iter:
+          (
+            classification_loss,
+            regression_loss,
+            global_classification_loss,
+            nms_scores,
+            global_class,
+            transformed_anchors,
+          ) = retinanet(
+              [
+                  data["img"].to(device).float(),
+                  data["annot"].to(device).float(),
+                  data["category"].to(device),
+              ],
+              return_loss=True,
+              return_boxes=True,
+          )
 
-            if save_oof:
-                # predictions
-                oof["gt_boxes"].append(data["annot"].cpu().numpy().copy())
-                oof["gt_category"].append(data["category"].cpu().numpy().copy())
-                oof["boxes"].append(transformed_anchors.cpu().numpy().copy())
-                oof["scores"].append(nms_scores.cpu().numpy().copy())
-                oof["category"].append(global_class.cpu().numpy().copy())
+          if save_oof:
+              # predictions
+              oof["gt_boxes"].append(data["annot"].cpu().numpy().copy())
+              oof["gt_category"].append(data["category"].cpu().numpy().copy())
+              oof["boxes"].append(transformed_anchors.cpu().numpy().copy())
+              oof["scores"].append(nms_scores.cpu().numpy().copy())
+              oof["category"].append(global_class.cpu().numpy().copy())
 
-            # get losses
-            classification_loss = classification_loss.mean()
-            regression_loss = regression_loss.mean()
-            global_classification_loss = global_classification_loss.mean()
-            loss = classification_loss + regression_loss + global_classification_loss * 0.1
+          # get losses
+          classification_loss = classification_loss.mean()
+          regression_loss = regression_loss.mean()
+          global_classification_loss = global_classification_loss.mean()
+          loss = classification_loss + regression_loss + global_classification_loss * 0.1
 
-            # loss history
-            loss_hist_valid.append(float(loss))
-            loss_cls_hist_valid.append(float(classification_loss))
-            loss_cls_global_hist_valid.append(float(global_classification_loss))
-            loss_reg_hist_valid.append(float(regression_loss))
-            #data_iter.set_description(
-            #    f"{epoch_num} cls: {np.mean(loss_cls_hist_valid):1.4f} cls g: {np.mean(loss_cls_global_hist_valid):1.4f} Reg: {np.mean(loss_reg_hist_valid):1.4f} Loss {np.mean(loss_hist_valid):1.4f}"
-            #)
-            print(
-              'Epoch: {} | Iteration: {} | \n\t\tClassification loss: {:1.5f} | Regression loss: {:1.5f} | \n\t\tGlobal loss: {:1.5f} | Running loss: {:1.5f}'.format(
-                epoch_num, iter_num, float(np.mean(loss_cls_hist_valid)), float(np.mean(loss_reg_hist_valid)), float(np.mean(loss_cls_global_hist_valid)), np.mean(loss_hist_valid))
-            )
-            del classification_loss
-            del regression_loss
+          # loss history
+          loss_hist_valid.append(float(loss))
+          loss_cls_hist_valid.append(float(classification_loss))
+          loss_cls_global_hist_valid.append(float(global_classification_loss))
+          loss_reg_hist_valid.append(float(regression_loss))
+          #data_iter.set_description(
+          #    f"{epoch_num} cls: {np.mean(loss_cls_hist_valid):1.4f} cls g: {np.mean(loss_cls_global_hist_valid):1.4f} Reg: {np.mean(loss_reg_hist_valid):1.4f} Loss {np.mean(loss_hist_valid):1.4f}"
+          #)
+          print(
+            '\n VALIDATION Epoch: {} | Iteration: {} | Classification loss: {:1.5f} |\n Regression loss: {:1.5f} | Global loss: {:1.5f} | Running loss: {:1.5f}'.format(
+              epoch_num, iter_num, float(np.mean(loss_cls_hist_valid)), float(np.mean(loss_reg_hist_valid)), float(np.mean(loss_cls_global_hist_valid)), np.mean(loss_hist_valid))
+          )
+          del classification_loss
+          del regression_loss
 
-        if save_oof:  # save predictions
-            pickle.dump(oof, open(f"{predictions_dir}/{epoch_num:03}.pkl", "wb"))
+      if save_oof:  # save predictions
+          pickle.dump(oof, open(f"{predictions_dir}/{epoch_num:03}.pkl", "wb"))
 
-    return loss_hist_valid, loss_cls_hist_valid, loss_cls_global_hist_valid, loss_reg_hist_valid
+  print(f'END VALIDATION EPOCH {epoch_num}')
+  return loss_hist_valid, loss_cls_hist_valid, loss_cls_global_hist_valid, loss_reg_hist_valid
 
 
 def train(
@@ -190,7 +192,7 @@ def train(
         epoch_loss.append(float(loss))
         
         print(
-          'Epoch: {} | Iteration: {} | \n\t\tClassification loss: {:1.5f} | Regression loss: {:1.5f} | \n\t\tGlobal loss: {:1.5f} | Running loss: {:1.5f}'.format(
+          '\n Epoch: {} | Iteration: {} | Classification loss: {:1.5f} |\n Regression loss: {:1.5f} | Global loss: {:1.5f} | Running loss: {:1.5f}'.format(
             epoch_num, iter_num, float(classification_loss), float(regression_loss), float(global_classification_loss), np.mean(epoch_loss))
         )
 
@@ -252,7 +254,7 @@ def main():
   train_dataset = CXRimages(csv_file = train_df , images_dir = IMAGES_DIR, augmentations=AUGMENTATION, transform = None)
   val_dataset = CXRimages(csv_file = val_df , images_dir = IMAGES_DIR, augmentations=AUGMENTATION, transform = None)
   test_dataset = CXRimages(csv_file = test_df , images_dir = IMAGES_DIR, augmentations=AUGMENTATION, transform = None)
-  print(f'Samples in train set: {len(train_dataset)} \nSamples in validation set: {len(val_dataset)} \nSamples in test set: {len(test_dataset)}')
+  print(f' Samples in train set: {len(train_dataset)} \n Samples in validation set: {len(val_dataset)} \n Samples in test set: {len(test_dataset)}')
 
   # set batch size
   train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True, collate_fn=collater2d) 
@@ -260,7 +262,7 @@ def main():
   test_dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True, collate_fn=collater2d) 
 
   ### RUNNER ###
-  print("TRAINING STARTED")
+  print("\nTRAINING STARTED")
   train(ENCODER, train_dataloader, val_dataloader, EPOCHS, '', 0)
   print("TRAINING FINISHED\n")
 

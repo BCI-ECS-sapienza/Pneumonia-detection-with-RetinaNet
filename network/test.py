@@ -11,7 +11,8 @@ from torch.utils.data import Dataset, DataLoader
 from dataloader import CXRimages, collater2d
 from RetinaNet.retinanet import RetinaNet
 from RetinaNet.encoder_resnet import resnet50 
-# IMPORT ALL ENCODERS
+from RetinaNet.encoder_se_resnext50 import se_resnext50
+from RetinaNet.encoder_xception import xception
 
 import matplotlib.pyplot as plt
 import torch.optim as lr_scheduler
@@ -24,11 +25,13 @@ BATCH_SIZE = 8
 
 TEST_CSV = ''
 IMAGES_DIR = ''
+AUGMENTATION = "resize_only"
+ENCODER = 'resnet_50__resize_final.pt'
 PICS_DIR = './pics'
 CHECKPOINTS = './checkpoints'
 EPOCHS = 5
 
-AUGMENTATION = "resize_only"
+
 
 
 def test(
@@ -39,7 +42,8 @@ def test(
     ):
 
     # Load model
-    model = torch.load('./checkpoints/resize_only_resnet50/resnet50_final.pt') #TODO: LOAD MODEL
+    path = f"./models/{ENCODER}_{AUGMENTATION}.pt"
+    model = torch.load(path) #TODO: LOAD MODEL
     model = model.to(device)
     model.eval()
 
@@ -155,16 +159,17 @@ def main():
 
 if __name__ == "__main__":
 
-    if len(sys.argv[1:]) < 3:
-        print('USAGE: python3 test.py [test_csv_path] [images_dir_path] [checkpoints_path] {[augmentation_level]} \
+    if len(sys.argv[1:]) < 5:
+        print('USAGE: python3 test.py [test_csv_path] [images_dir_path] [model_path] [checkpoints_path] {[augmentation_level]} \
             \n Augmentation levels: resize_only (default), light, heavy, heavy_with_rotations')
         sys.exit(1)
 
     TEST_CSV = sys.argv[1]
     IMAGES_DIR = sys.argv[2]
-    CHECKPOINTS = sys.argv[3]
-    elif len(sys.argv[1:]) == 4:
-        AUGMENTATION = sys.argv[4]
+    ENCODER = sys.argv[3]
+    CHECKPOINTS = sys.argv[4]
+    elif len(sys.argv[1:]) == 5:
+        AUGMENTATION = sys.argv[5]
     
     print(f' labels_csv_path: {TEST_CSV}\n images_dir_path: {IMAGES_DIR}\n checkpoints_path: {CHECKPOINTS}\n augmentation_level: {AUGMENTATION}\n')
     

@@ -5,8 +5,7 @@ import torch
 import torch.utils.model_zoo as model_zoo
 
 from pretrainedmodels.models import senet
-from torchsummary import summary
-from .model import RetinaNet
+from .retinanet import RetinaNet
 
 
 class SeResNetXtEncoder(nn.Module):

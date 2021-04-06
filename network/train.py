@@ -11,7 +11,8 @@ from torch.utils.data import Dataset, DataLoader
 from dataloader import CXRimages, collater2d
 from RetinaNet.retinanet import RetinaNet
 from RetinaNet.encoder_resnet import resnet50 
-# IMPORT ALL ENCODERS
+from RetinaNet.encoder_se_resnext50 import se_resnext50
+from RetinaNet.encoder_xception import xception
 
 import torch.optim as lr_scheduler
 from torch import nn, optim
@@ -20,11 +21,11 @@ from tqdm import tqdm
 
 # PARAMS and CONFIGS
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-BATCH_SIZE = 8
+BATCH_SIZE = 16
 
-LABELS_CSV = ''
+LABELS_DIR = ''
 IMAGES_DIR = ''
-EPOCHS = 0
+EPOCHS = 8
 
 AUGMENTATION = "resize_only"
 ENCODER = "resnet50"
@@ -115,17 +116,17 @@ def train(
     retinanet = resnet50(1, pretrained)
   elif model_name == 'se_resnext50':
     retinanet = se_resnext50(1, pretrained)
-  elif model_name == 'pnasnet5':
-    retinanet = PNasnet5(1, pretrained)
   elif model_name == 'xception':
     retinanet = xception(1, pretrained)
 
-  checkpoints_dir = f'./checkpoints/{AUGMENTATION}_{ENCODER}'
-  predictions_dir = f'./predictions/{AUGMENTATION}_{ENCODER}'
-  tensorboard_dir = f'./tensorboard/{AUGMENTATION}_{ENCODER}'
+  checkpoints_dir = f'./checkpoints/{ENCODER}_{AUGMENTATION}'
+  predictions_dir = f'./predictions/{ENCODER}_{AUGMENTATION}'
+  tensorboard_dir = f'./tensorboard/{ENCODER}_{AUGMENTATION}'
+  models_dir = f'./models'
   os.makedirs(checkpoints_dir, exist_ok=True)
   os.makedirs(predictions_dir, exist_ok=True)
   os.makedirs(tensorboard_dir, exist_ok=True)
+  os.makedirs(models_dir, exist_ok=True)
   logger = SummaryWriter(tensorboard_dir)
 
   # load weights to continue training
@@ -199,7 +200,7 @@ def train(
         del classification_loss
         del regression_loss
 
-    torch.save(retinanet.module, f"{checkpoints_dir}/{model_name}_{epoch_num:03}.pt")
+    torch.save(retinanet.module, f"{checkpoints_dir}/{ENCODER}_{AUGMENTATION}_{epoch_num:03}.pt")
     logger.add_scalar('Loss_train', np.mean(epoch_loss), epoch_num)
     logger.add_scalar("loss_train_classification", np.mean(loss_cls_hist), epoch_num)
     logger.add_scalar("loss_train_global_classification", np.mean(loss_cls_global_hist), epoch_num)
@@ -230,36 +231,24 @@ def train(
         scheduler.step(np.mean(loss_reg_hist_valid))
   
   retinanet.eval()
-  torch.save(retinanet, f"{checkpoints_dir}/{model_name}_final.pt")
+  torch.save(retinanet, f"{models_dir}/{ENCODER}_{AUGMENTATION}.pt")
   logger.close()
 
 
 
 def main():
-  np.random.seed(13)
-
-  train_class_df = pd.read_csv(LABELS_CSV)
-  msk = np.random.rand(len(train_class_df)) < 0.8
-
-  # split train and val/test + add indexes from 0 as required by class definition
-  train_df = train_class_df[msk].reset_index()  
-  val_train_df = train_class_df[~msk]
-
-  # split val/test
-  split_val = int(len(val_train_df)/2)
-  val_df = val_train_df.iloc[:split_val,:].reset_index()
-  test_df = val_train_df.iloc[split_val:,:].reset_index()
+  
+  train_df = pd.read_csv(LABELS_DIR+'train_labels.csv')
+  val_df = pd.read_csv(LABELS_DIR+'valid_labels.csv')
 
   # load custom dataset
   train_dataset = CXRimages(csv_file = train_df , images_dir = IMAGES_DIR, augmentations=AUGMENTATION, transform = None)
   val_dataset = CXRimages(csv_file = val_df , images_dir = IMAGES_DIR, augmentations=AUGMENTATION, transform = None)
-  test_dataset = CXRimages(csv_file = test_df , images_dir = IMAGES_DIR, augmentations=AUGMENTATION, transform = None)
-  print(f' Samples in train set: {len(train_dataset)} \n Samples in validation set: {len(val_dataset)} \n Samples in test set: {len(test_dataset)}')
+  print(f' Samples in train set: {len(train_dataset)} \n Samples in validation set: {len(val_dataset)}')
 
   # set batch size
   train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True, collate_fn=collater2d) 
   val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True, collate_fn=collater2d)
-  test_dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True, collate_fn=collater2d) 
 
   ### RUNNER ###
   print("\nTRAINING STARTED")
@@ -267,30 +256,25 @@ def main():
   print("TRAINING FINISHED\n")
 
 
-  ### TEST ###
-  print("TESTS STARTED")
-  # test => test_dataloader
-  print("TESTS FINISHED\n")
-
-
 if __name__ == "__main__":
 
-  if len(sys.argv[1:]) <3:
-    print('USAGE: python3 train.py [labels_csv_path] [images_dir_path] [epochs] {[augmentation_level]} {[encoder]} \
+  if len(sys.argv[1:]) <2:
+    print('USAGE: python3 train.py [labels_folder_path] [images_dir_path] {[epochs]} {[augmentation_level]} {[encoder]} \
           \n Augmentation levels: resize_only (default), light, heavy, heavy_with_rotations \
           \n Encoders: resnet_50 (default), se_resnext50, pnasnet5, xception')
     sys.exit(1)
 
-  LABELS_CSV = sys.argv[1]
+  LABELS_DIR = sys.argv[1]
   IMAGES_DIR = sys.argv[2]
-  EPOCHS = int(sys.argv[3])
+  if len(sys.argv[1:]) == 3:
+    EPOCHS = int(sys.argv[3])
   if len(sys.argv[1:]) == 4:
+    EPOCHS = int(sys.argv[3])
     AUGMENTATION = sys.argv[4]
   elif len(sys.argv[1:]) == 5:
+    EPOCHS = int(sys.argv[3])
     AUGMENTATION = sys.argv[4]
     ENCODER = sys.argv[5]
   
-  print(f' labels_csv_path: {LABELS_CSV}\n images_dir_path: {IMAGES_DIR}\n images_dir_path: {EPOCHS}\n augmentation_level: {AUGMENTATION}\n encoder: {ENCODER}\n')
-
-  
+  print(f' labels_folder_path: {LABELS_DIR}\n images_dir_path: {IMAGES_DIR}\n images_dir_path: {EPOCHS}\n augmentation_level: {AUGMENTATION}\n encoder: {ENCODER}\n')
   main()

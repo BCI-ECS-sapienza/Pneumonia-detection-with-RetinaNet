@@ -15,10 +15,22 @@ The labelled dataset of the chest X-ray images and patients metadata was publicl
 -  The class ”No Lung Opacity / Not Normal” illustrated data for patients with visible on CXR lung opacity regions, but without diagnosed pneumonia.
 
 
-Once preprocessed the dataset, we built a Pytorch *RetinaNet*-based model, with the following modifications, inherited from the paper:
+Once preprocessed the dataset, we built a Pytorch *RetinaNet*-based model, with the following encoders:
+- resnet50 
+- se_resnext50
+- xception
 
+## Repository files
+- network => the model, with training and test files
+- Augmentation.ipynb => show some example augmentations we are using for the model training
+- Dataset_overview.ipynb => dataset overview and statistics
+- merge_and_split_dataset.py => script to merge the input CSV files and then make train/valid/test CSVs
 
-
+## How to run
+1. Download the dataset folder from [Kaggle](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data)  
+2. run merge_and_split_dataset.py
+3. run network/train.py with the correct parameters, to train the model with choosen encoder and augmentation
+4. run network/test.py with the correct parameters, to test the choosen model
 
 ---
 ## Authors

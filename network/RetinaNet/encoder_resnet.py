@@ -5,9 +5,6 @@ import math
 import time
 
 import torch.utils.model_zoo as model_zoo
-from .boxes import BBoxTransform, ClipBoxes
-from .anchors import Anchors
-from .focal_loss import FocalLoss
 from .retinanet import RetinaNet, RetinaNetEncoder
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

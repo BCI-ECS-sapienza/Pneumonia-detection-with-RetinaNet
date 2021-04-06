@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
 from torch.nn import init
 import torch
+from .retinanet import RetinaNet, RetinaNetEncoder
 
 __all__ = ['xception']
 
@@ -180,7 +181,7 @@ class Xception(nn.Module):
 
 
 
-def xception(pretrained=False,**kwargs):
+def xception(num_classes, pretrained=False,**kwargs):
     """
     Construct Xception.
     """

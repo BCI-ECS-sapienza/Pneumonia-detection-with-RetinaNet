@@ -276,5 +276,5 @@ if __name__ == "__main__":
     AUGMENTATION = sys.argv[4]
     ENCODER = sys.argv[5]
   
-  print(f' labels_folder_path: {LABELS_DIR}\n images_dir_path: {IMAGES_DIR}\n images_dir_path: {EPOCHS}\n augmentation_level: {AUGMENTATION}\n encoder: {ENCODER}\n')
+  print(f' labels_folder_path: {LABELS_DIR}\n images_dir_path: {IMAGES_DIR}\n epochs: {EPOCHS}\n augmentation_level: {AUGMENTATION}\n encoder: {ENCODER}\n')
   main()

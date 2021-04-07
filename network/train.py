@@ -7,6 +7,8 @@ import pickle
 import torch
 
 from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter()
+
 from torch.utils.data import Dataset, DataLoader
 from dataloader import CXRimages, collater2d
 from RetinaNet.retinanet import RetinaNet
@@ -99,6 +101,14 @@ def validation(
           pickle.dump(oof, open(f"{predictions_dir}/{epoch_num:03}.pkl", "wb"))
 
   print(f'END VALIDATION EPOCH {epoch_num}')
+  # log the epoch loss
+  writer.add_scalar('validation loss',
+                  loss, #loss/len(train_dataloader),
+                  epoch_num)
+  # log the epoch accuracy
+  # writer.add_scalar('validation accuracy',
+  #                epoch_accuracy, #epoch_accuracy/len(trainset),
+  #                epoch_num)
   return loss_hist_valid, loss_cls_hist_valid, loss_cls_global_hist_valid, loss_reg_hist_valid
 
 
@@ -199,6 +209,15 @@ def train(
 
         del classification_loss
         del regression_loss
+    
+    # log the epoch loss
+    writer.add_scalar('training loss',
+                    epoch_loss, #epoch_loss/len(train_dataloader),
+                    epoch_num)
+    # log the epoch accuracy
+    # writer.add_scalar('training accuracy',
+    #                epoch_accuracy, #epoch_accuracy/len(trainset),
+    #                epoch_num)
 
     torch.save(retinanet.module, f"{checkpoints_dir}/{ENCODER}_{AUGMENTATION}_{epoch_num:03}.pt")
     logger.add_scalar('Loss_train', np.mean(epoch_loss), epoch_num)
@@ -254,6 +273,9 @@ def main():
   print("\nTRAINING STARTED")
   train(ENCODER, train_dataloader, val_dataloader, EPOCHS, '', 0)
   print("TRAINING FINISHED\n")
+
+  # closing writer
+  writer.close()
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import pandas as pd
+import argparse
 import collections
 import pickle
 import torch
@@ -19,17 +20,7 @@ from torch import nn, optim
 from tqdm import tqdm
 
 
-# PARAMS and CONFIGS
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-BATCH_SIZE = 16
-
-LABELS_DIR = ''
-IMAGES_DIR = ''
-EPOCHS = 8
-
-AUGMENTATION = "resize_only"
-ENCODER = "resnet50"
-
 
 def validation(
     retinanet: nn.Module, 
@@ -103,10 +94,11 @@ def validation(
 
 
 def train(
-    model_name: str,
     train_dataloader: DataLoader,
     validation_dataloader: DataLoader,
     epochs: int,
+    model_name: str,
+    augmentation: str,
     resume_weights: str="",
     resume_epoch: int=0):
 
@@ -119,9 +111,9 @@ def train(
   elif model_name == 'xception':
     retinanet = xception(1, pretrained)
 
-  checkpoints_dir = f'./checkpoints/{ENCODER}_{AUGMENTATION}'
-  predictions_dir = f'./predictions/{ENCODER}_{AUGMENTATION}'
-  tensorboard_dir = f'./tensorboard/{ENCODER}_{AUGMENTATION}'
+  checkpoints_dir = f'./checkpoints/{model_name}_{augmentation}'
+  predictions_dir = f'./predictions/{model_name}_{augmentation}'
+  tensorboard_dir = f'./tensorboard/{model_name}_{augmentation}'
   models_dir = f'./models'
   os.makedirs(checkpoints_dir, exist_ok=True)
   os.makedirs(predictions_dir, exist_ok=True)
@@ -200,7 +192,7 @@ def train(
         del classification_loss
         del regression_loss
 
-    torch.save(retinanet.module, f"{checkpoints_dir}/{ENCODER}_{AUGMENTATION}_{epoch_num:03}.pt")
+    torch.save(retinanet.module, f"{checkpoints_dir}/{model_name}_{augmentation}_{epoch_num:03}.pt")
     logger.add_scalar('Loss_train', np.mean(epoch_loss), epoch_num)
     logger.add_scalar("loss_train_classification", np.mean(loss_cls_hist), epoch_num)
     logger.add_scalar("loss_train_global_classification", np.mean(loss_cls_global_hist), epoch_num)
@@ -231,12 +223,12 @@ def train(
         scheduler.step(np.mean(loss_reg_hist_valid))
   
   retinanet.eval()
-  torch.save(retinanet, f"{models_dir}/{ENCODER}_{AUGMENTATION}.pt")
+  torch.save(retinanet, f"{models_dir}/{model_name}_{augmentation}.pt")
   logger.close()
 
 
 
-def main():
+def main(LABELS_DIR, IMAGES_DIR, EPOCHS, BATCH_SIZE, ENCODER, AUGMENTATION):
   
   train_df = pd.read_csv(LABELS_DIR+'train_labels.csv')
   val_df = pd.read_csv(LABELS_DIR+'valid_labels.csv')
@@ -252,29 +244,29 @@ def main():
 
   ### RUNNER ###
   print("\nTRAINING STARTED")
-  train(ENCODER, train_dataloader, val_dataloader, EPOCHS, '', 0)
+  train(train_dataloader, val_dataloader, EPOCHS, ENCODER, AUGMENTATION, '', 0)
   print("TRAINING FINISHED\n")
+
 
 
 if __name__ == "__main__":
 
-  if len(sys.argv[1:]) <2:
-    print('USAGE: python3 train.py [labels_folder_path] [images_dir_path] {[epochs]} {[augmentation_level]} {[encoder]} \
-          \n Augmentation levels: resize_only (default), light, heavy, heavy_with_rotations \
-          \n Encoders: resnet_50 (default), se_resnext50, pnasnet5, xception')
-    sys.exit(1)
+  parser = argparse.ArgumentParser()
+  arg = parser.add_argument
+  arg("--labels_folder", type=str, default="dataset/tmp/", help="CSVs folder path")
+  arg("--images_folder", type=str, default="dataset/stage_2_train_images/", help="images folder path")
+  arg("--epochs", type=int, default=8, help="number epochs")
+  arg("--batch_size", type=int, default=8, help="batch size")
+  arg("--encoder", type=str, default='resnet50', help="encoder")
+  arg("--augmentation", type=str, default="resize_only", help="augmentation type")  
+  args = parser.parse_args()
 
-  LABELS_DIR = sys.argv[1]
-  IMAGES_DIR = sys.argv[2]
-  if len(sys.argv[1:]) == 3:
-    EPOCHS = int(sys.argv[3])
-  if len(sys.argv[1:]) == 4:
-    EPOCHS = int(sys.argv[3])
-    AUGMENTATION = sys.argv[4]
-  elif len(sys.argv[1:]) == 5:
-    EPOCHS = int(sys.argv[3])
-    AUGMENTATION = sys.argv[4]
-    ENCODER = sys.argv[5]
+  LABELS_DIR = args.labels_folder
+  IMAGES_DIR = args.images_folder
+  EPOCHS = args.epochs
+  BATCH_SIZE = args.batch_size
+  ENCODER = args.encoder
+  AUGMENTATION = args.augmentation
   
-  print(f' labels_folder_path: {LABELS_DIR}\n images_dir_path: {IMAGES_DIR}\n epochs: {EPOCHS}\n augmentation_level: {AUGMENTATION}\n encoder: {ENCODER}\n')
-  main()
+  print(f' labels_folder_path: {LABELS_DIR}\n images_dir_path: {IMAGES_DIR}\n epochs: {EPOCHS}\n batch_size: {BATCH_SIZE}\n augmentation_level: {AUGMENTATION}\n encoder: {ENCODER}\n')
+  main(LABELS_DIR, IMAGES_DIR, EPOCHS, BATCH_SIZE, ENCODER, AUGMENTATION)

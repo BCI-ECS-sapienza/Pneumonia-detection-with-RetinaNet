@@ -1,6 +1,6 @@
 # Neural Network for Automatic Pneumonia Detection
 
-Identifying cases of Pneumonia is tedious and often leads to a disagreement between radiologists. However, computer-aided diagnosis systems showed the potential for improving diagnostic accuracy. In this work, taking inspiration from the assigned paper, we replicate and build some computational approaches for pneumonia regions detection.
+Identifying cases of Pneumonia is tedious and often leads to a disagreement between radiologists. However, computer-aided diagnosis systems showed the potential for improving diagnostic accuracy. In this work, taking inspiration from the reference paper, we replicate and build some computational approaches for pneumonia regions detection.
 
 For the experiment documents:
 * ##### [Full report](./report.pdf)
@@ -20,17 +20,27 @@ Once preprocessed the dataset, we built a Pytorch *RetinaNet*-based model, with 
 - se_resnext50
 - xception
 
-## Repository files
-- network => the model, with training and test files
-- Augmentation.ipynb => show some example augmentations we are using for the model training
-- Dataset_overview.ipynb => dataset overview and statistics
-- merge_and_split_dataset.py => script to merge the input CSV files and then make train/valid/test CSVs
+Moreover, for each encoder we tried four different augmentations:
+- resize_only
+- light
+- heavy
+- heavy_with_rotations
+
 
 ## How to run
 1. Download the dataset folder from [Kaggle](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data)  
-2. run merge_and_split_dataset.py
-3. run network/train.py with the correct parameters, to train the model with choosen encoder and augmentation
-4. run network/test.py with the correct parameters, to test the choosen model
+2. run ```merge_and_split_dataset.py```, so that to make the **dataset/tmp/** folder containg the **train/valid/test_labels.csv** files (add ```--sample``` for a sample subset)
+3. run ```network/train.py``` to train the model with choosen encoder and augmentation. Example parameters:
+    ``` python3 network\train.py --labels_folder=dataset/tmp/ --images_folder=dataset/stage_2_train_images/ --epochs=8 --batch_size=8 --encoder=resnet50 --augmentation=resize_only ```
+4. run ```network/test.py```  to test the choosen model. Example parameters:
+    ``` python3 network\train.py --labels_folder=dataset/tmp/ --images_folder=dataset/stage_2_train_images/ --model=resnet50_resize_only --batch_size=8```
+
+
+## Repository files
+- network => the retinanet-based structure, the encoders, the dataloader, and so on...
+- Augmentation.ipynb => shows some example augmentations we are using for the model training
+- Dataset_overview.ipynb => dataset overview and statistics
+- merge_and_split_dataset.py => script to merge the input CSV files and then make train/valid/test CSVs
 
 ---
 ## Authors

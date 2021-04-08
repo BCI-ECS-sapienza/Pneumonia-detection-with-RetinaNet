@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import pandas as pd
+import argparse
 import collections
 import pickle
 import torch
@@ -19,18 +20,8 @@ import torch.optim as lr_scheduler
 from torch import nn, optim
 from tqdm import tqdm
 
-# PARAMS and CONFIGS
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-BATCH_SIZE = 8
-
-TEST_CSV = ''
-IMAGES_DIR = ''
-MODEL = ''
 PICS_DIR = './pics'
-EPOCHS = 5
-
-
-
 
 def test(
     test_dataloader: nn.Module,
@@ -140,9 +131,10 @@ def test(
 
         print(nms_scores)
 
-def main():
+
+def main(LABELS_DIR, IMAGES_DIR, MODEL, BATCH_SIZE):
     # load custom dataset
-    test_df = pd.read_csv(TEST_CSV)
+    test_df = pd.read_csv(LABELS_DIR+'test_labels.csv')
     test_dataset = CXRimages(csv_file = test_df , images_dir = IMAGES_DIR, transform = None)
     print(f'Samples in test set: {len(test_dataset)}')
 
@@ -158,14 +150,18 @@ def main():
 
 if __name__ == "__main__":
 
-    if len(sys.argv[1:]) < 3:
-        print('USAGE: python3 test.py [test_csv_path] [images_dir_path] [model_path]')
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    arg = parser.add_argument
+    arg("--labels_folder", type=str, default="dataset/tmp/", help="CSVs folder path")
+    arg("--images_folder", type=str, default="dataset/stage_2_train_images/", help="images folder path")
+    arg("--model", type=str, default='resnet50_resize_only', help="encoder")
+    arg("--batch_size", type=int, default=8, help="batch size")
+    args = parser.parse_args()
 
-    TEST_CSV = sys.argv[1]      # Path to the test csv labels
-    IMAGES_DIR = sys.argv[2]    # Path to the testset images
-    MODEL = sys.argv[3]         # Path to the trained model
-    
-    print(f' labels_csv_path: {TEST_CSV}\n images_dir_path: {IMAGES_DIR}\n model_path: {MODEL}\n')
-    
-    main()
+    LABELS_DIR = args.labels_folder
+    IMAGES_DIR = args.images_folder
+    MODEL = args.model
+    BATCH_SIZE = args.batch_size
+  
+    print(f' labels_folder_path: {LABELS_DIR}\n images_dir_path: {IMAGES_DIR}\n model: {MODEL}\n batch_size: {BATCH_SIZE}\n')
+    main(LABELS_DIR, IMAGES_DIR, MODEL, BATCH_SIZE)

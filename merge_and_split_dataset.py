@@ -1,4 +1,5 @@
 import sys
+import os
 import numpy as np
 import pandas as pd
 
@@ -10,7 +11,7 @@ n_samples = 100
 
 
 if len(sys.argv[1:]) > 0:
-    if (sys.argv[1] == "-sample"):
+    if (sys.argv[1] == "--sample"):
         sample = True
         if  len(sys.argv[1:]) > 1:
             n_samples = int(sys.argv[2])
@@ -55,7 +56,7 @@ split_val = int(len(val_train_df)/2)
 val_df = val_train_df.iloc[:split_val,:].reset_index()
 test_df = val_train_df.iloc[split_val:,:].reset_index()
 
-
+os.makedirs('dataset/tmp', exist_ok=True)
 train_df.to_csv(path_or_buf='./dataset/tmp/train_labels.csv', index=False)
 val_df.to_csv(path_or_buf='./dataset/tmp/valid_labels.csv', index=False)
 val_df.to_csv(path_or_buf='./dataset/tmp/test_labels.csv', index=False)

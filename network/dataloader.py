@@ -1,10 +1,10 @@
 import os
 import pandas as pd
 import numpy as np
-import pydicom
 
 import torch
 from torch.utils.data import Dataset
+from pydicom import dcmread
 import torchvision.transforms as T
 
 import imgaug as ia
@@ -61,11 +61,11 @@ def augmentation_pipeline(level):
 
 def get_image_array(image_path):
   try:
-    dcm_data = pydicom.read_file(image_path)
+    dcm_data = dcmread(image_path)
     img = dcm_data.pixel_array
     return img
   except:
-    print(f'error image:{image_path} load')
+    print(f'\nerror image:{image_path} load')
     pass
 
 

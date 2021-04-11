@@ -20,7 +20,7 @@ three different classes from the associated radiological reports:
 Once preprocessed the dataset, we built a Pytorch *RetinaNet*-based model, with the following encoders:
 - **resnet50:** short for Residual Networks, it is a classic neural network used as a backbone for many computer vision tasks. In this case we are usin the 50 layers version.
 - **se_resnext50:**
-- **xception:**
+- **pnasnet:**
 
 Moreover, for each encoder we tried four different augmentations:
 - **resize_only:** resize only images, no real augmentation

@@ -13,7 +13,7 @@ from dataloader import CXRimages, collater2d
 from RetinaNet.retinanet import RetinaNet
 from RetinaNet.encoder_resnet import resnet50 
 from RetinaNet.encoder_se_resnext50 import se_resnext50
-from RetinaNet.encoder_xception import xception
+from RetinaNet.encoder_pnasnet import pnasnet5
 
 import torch.optim as lr_scheduler
 from torch import nn, optim
@@ -30,7 +30,7 @@ def validation(
     save_oof=True,
 ) -> tuple:
 
-  print(f'START VALIDATION EPOCH {epoch_num}')
+  print(f'\nSTART VALIDATION EPOCH {epoch_num}')
   with torch.no_grad():
       retinanet.eval()
       loss_hist_valid, loss_cls_hist_valid, loss_cls_global_hist_valid, loss_reg_hist_valid = [],[],[],[]
@@ -89,7 +89,7 @@ def validation(
       if save_oof:  # save predictions
           pickle.dump(oof, open(f"{predictions_dir}/{epoch_num:03}.pkl", "wb"))
 
-  print(f'END VALIDATION EPOCH {epoch_num}')
+  print(f'END VALIDATION EPOCH {epoch_num}\n')
   return loss_hist_valid, loss_cls_hist_valid, loss_cls_global_hist_valid, loss_reg_hist_valid
 
 
@@ -108,8 +108,11 @@ def train(
     retinanet = resnet50(1, pretrained)
   elif model_name == 'se_resnext50':
     retinanet = se_resnext50(1, pretrained)
-  elif model_name == 'xception':
-    retinanet = xception(1, pretrained)
+  elif model_name == 'pnasnet5':
+    retinanet = pnasnet5(1, pretrained)
+  else:
+    print('\n The selected encoder is not available')
+    sys.exit(1)
 
   checkpoints_dir = f'./checkpoints/{model_name}_{augmentation}'
   predictions_dir = f'./predictions/{model_name}_{augmentation}'
@@ -256,9 +259,9 @@ if __name__ == "__main__":
   arg("--labels_folder", type=str, default="dataset/tmp/", help="CSVs folder path")
   arg("--images_folder", type=str, default="dataset/stage_2_train_images/", help="images folder path")
   arg("--epochs", type=int, default=8, help="number epochs")
-  arg("--batch_size", type=int, default=8, help="batch size")
-  arg("--encoder", type=str, default='resnet50', help="encoder")
-  arg("--augmentation", type=str, default="resize_only", help="augmentation type")  
+  arg("--batch_size", type=int, default=8, help="number batch size")
+  arg("--encoder", type=str, default='resnet50', help="select encoder: resnet50 / se_resnext50 / pnasnet5")
+  arg("--augmentation", type=str, default="resize_only", help="select augmentation type: resize_only / light / heavy / heavy_with_rotations")  
   args = parser.parse_args()
 
   LABELS_DIR = args.labels_folder

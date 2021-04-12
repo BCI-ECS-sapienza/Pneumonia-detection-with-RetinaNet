@@ -13,7 +13,7 @@ from dataloader import CXRimages, collater2d
 from RetinaNet.retinanet import RetinaNet
 from RetinaNet.encoder_resnet import resnet50 
 from RetinaNet.encoder_se_resnext50 import se_resnext50
-from RetinaNet.encoder_xception import xception
+#from RetinaNet.encoder_xception import xception
 
 import matplotlib.pyplot as plt
 import torch.optim as lr_scheduler
@@ -64,7 +64,7 @@ def test(
         transformed_anchors = transformed_anchors.cpu().detach().numpy()
 
         # Print results
-        print(f"nms_scores {nms_scores}, transformed_anchors.shape {transformed_anchors.shape}")
+        print(f"\nnms_scores {nms_scores}, transformed_anchors.shape {transformed_anchors.shape}")
         print(f"cls loss: {float(classification_loss)}, global cls loss: {global_classification_loss}, reg loss: {float(regression_loss)}")
         print(
             "category:",
@@ -118,19 +118,14 @@ def test(
                 )
             )
             plt.gca().text(p0[0], p0[1], f"{nms_score:.3f}", color=color)
+        fig = plt.gcf()
         plt.show()
 
-        os.makedirs(pics_dir+f'{MODEL}/', exist_ok=True)
-        plt.savefig(
-            f"{pics_dir}/{MODEL}/predict_{iter_num}.eps", dpi=300, bbox_inches="tight", pad_inches=0,
-        )
-        plt.savefig(
-            f"{pics_dir}/{MODEL}/predict_{iter_num}.png", dpi=300, bbox_inches="tight", pad_inches=0,
+        os.makedirs(pics_dir, exist_ok=True)
+        fig.savefig(
+            f"{pics_dir}/predict_{iter_num}.jpg", dpi=300, bbox_inches="tight", pad_inches=0,
         )
         plt.close()
-
-        print(nms_scores)
-
 
 def main(LABELS_DIR, IMAGES_DIR, MODEL, BATCH_SIZE):
     # load custom dataset

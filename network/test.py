@@ -21,7 +21,7 @@ from torch import nn, optim
 from tqdm import tqdm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-PICS_DIR = './pics'
+PICS_DIR = './pics/'
 
 def test(
     test_dataloader: nn.Module,
@@ -120,12 +120,12 @@ def test(
             plt.gca().text(p0[0], p0[1], f"{nms_score:.3f}", color=color)
         plt.show()
 
-        os.makedirs(pics_dir, exist_ok=True)
+        os.makedirs(pics_dir+f'{MODEL}/', exist_ok=True)
         plt.savefig(
-            f"{pics_dir}/predict_{iter_num}.eps", dpi=300, bbox_inches="tight", pad_inches=0,
+            f"{pics_dir}/{MODEL}/predict_{iter_num}.eps", dpi=300, bbox_inches="tight", pad_inches=0,
         )
         plt.savefig(
-            f"{pics_dir}/predict_{iter_num}.png", dpi=300, bbox_inches="tight", pad_inches=0,
+            f"{pics_dir}/{MODEL}/predict_{iter_num}.png", dpi=300, bbox_inches="tight", pad_inches=0,
         )
         plt.close()
 

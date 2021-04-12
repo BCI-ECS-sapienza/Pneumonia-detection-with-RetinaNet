@@ -56,7 +56,7 @@ def test(
                 data["category"].to(device),
             ],
             return_loss=True,
-            return_boxes=True,
+            return_boxes=True
         )
 
         nms_scores = nms_scores.cpu().detach().numpy()

@@ -22,6 +22,7 @@ def nms(boxes, overlap, top_k=200):
     Return:
         The indices of the kept boxes with respect to num_priors.
     """
+    boxes = boxes.detach()
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     x2 = boxes[:, 2]

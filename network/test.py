@@ -121,9 +121,9 @@ def test(
         fig = plt.gcf()
         plt.show()
 
-        os.makedirs(pics_dir, exist_ok=True)
+        os.makedirs(pics_dir + f'{MODEL}', exist_ok=True)
         fig.savefig(
-            f"{pics_dir}/predict_{iter_num}.jpg", dpi=300, bbox_inches="tight", pad_inches=0,
+            f"{pics_dir}/{MODEL}/predict_{iter_num}.jpg", dpi=300, bbox_inches="tight", pad_inches=0,
         )
         plt.close()
 

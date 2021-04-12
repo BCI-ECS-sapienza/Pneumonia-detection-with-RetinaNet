@@ -99,7 +99,6 @@ def train(
     epochs: int,
     model_name: str,
     augmentation: str,
-    resume_weights: str="",
     resume_epoch: int=0):
 
   pretrained = True
@@ -114,7 +113,7 @@ def train(
     print('\n The selected encoder is not available')
     sys.exit(1)
 
-  checkpoints_dir = f'./checkpoints/{model_name}_{augmentation}'
+  checkpoints_dir = f'./checkpoint/{model_name}_{augmentation}'
   predictions_dir = f'./predictions/{model_name}_{augmentation}'
   tensorboard_dir = f'./tensorboard/{model_name}_{augmentation}'
   models_dir = f'./models'
@@ -125,7 +124,8 @@ def train(
   logger = SummaryWriter(tensorboard_dir)
 
   # load weights to continue training
-  if resume_weights != "":
+  if resume_epoch > 0:
+    resume_weights = f"{checkpoints_dir}/{model_name}_{augmentation}_{resume_epoch:03}.pt"
     print("load model from: ", resume_weights)
     retinanet = torch.load(resume_weights).to(device)
   else:
@@ -141,8 +141,7 @@ def train(
   )
   scheduler_by_epoch = False
 
-  #for epoch_num in range(resume_epoch+1, epochs):
-  for epoch_num in range(epochs):  
+  for epoch_num in range(resume_epoch+1, epochs):
     retinanet.train() 
     
     if epoch_num < 1:
@@ -231,7 +230,7 @@ def train(
 
 
 
-def main(LABELS_DIR, IMAGES_DIR, EPOCHS, BATCH_SIZE, ENCODER, AUGMENTATION):
+def main(LABELS_DIR, IMAGES_DIR, EPOCHS, BATCH_SIZE, ENCODER, AUGMENTATION, RESUME_EPOCH):
   
   train_df = pd.read_csv(LABELS_DIR+'train_labels.csv')
   val_df = pd.read_csv(LABELS_DIR+'valid_labels.csv')
@@ -247,7 +246,7 @@ def main(LABELS_DIR, IMAGES_DIR, EPOCHS, BATCH_SIZE, ENCODER, AUGMENTATION):
 
   ### RUNNER ###
   print("\nTRAINING STARTED")
-  train(train_dataloader, val_dataloader, EPOCHS, ENCODER, AUGMENTATION, '', 0)
+  train(train_dataloader, val_dataloader, EPOCHS, ENCODER, AUGMENTATION, RESUME_EPOCH)
   print("TRAINING FINISHED\n")
 
 
@@ -262,6 +261,7 @@ if __name__ == "__main__":
   arg("--batch_size", type=int, default=8, help="number batch size")
   arg("--encoder", type=str, default='resnet50', help="select encoder: resnet50 / se_resnext50 / pnasnet5")
   arg("--augmentation", type=str, default="resize_only", help="select augmentation type: resize_only / light / heavy / heavy_with_rotations")  
+  arg("--resume_epoch", type=str, default=0, help="epoch from which resume model")  
   args = parser.parse_args()
 
   LABELS_DIR = args.labels_folder
@@ -270,6 +270,7 @@ if __name__ == "__main__":
   BATCH_SIZE = args.batch_size
   ENCODER = args.encoder
   AUGMENTATION = args.augmentation
+  RESUME_EPOCH = int(args.resume_epoch)
   
   print(f' labels_folder_path: {LABELS_DIR}\n images_dir_path: {IMAGES_DIR}\n epochs: {EPOCHS}\n batch_size: {BATCH_SIZE}\n augmentation_level: {AUGMENTATION}\n encoder: {ENCODER}\n')
-  main(LABELS_DIR, IMAGES_DIR, EPOCHS, BATCH_SIZE, ENCODER, AUGMENTATION)
+  main(LABELS_DIR, IMAGES_DIR, EPOCHS, BATCH_SIZE, ENCODER, AUGMENTATION, RESUME_EPOCH)

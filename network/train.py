@@ -128,6 +128,7 @@ def train(
     resume_weights = f"{checkpoints_dir}/{model_name}_{augmentation}_{resume_epoch:03}.pt"
     print("load model from: ", resume_weights)
     retinanet = torch.load(resume_weights).to(device)
+    resume_epoch += 1 ## starts from the new one
   else:
     retinanet = retinanet.to(device)
   
@@ -141,7 +142,7 @@ def train(
   )
   scheduler_by_epoch = False
 
-  for epoch_num in range(resume_epoch+1, epochs):
+  for epoch_num in range(resume_epoch, epochs):
     retinanet.train() 
     
     if epoch_num < 1:
@@ -261,7 +262,7 @@ if __name__ == "__main__":
   arg("--batch_size", type=int, default=8, help="number batch size")
   arg("--encoder", type=str, default='resnet50', help="select encoder: resnet50 / se_resnext50 / pnasnet5")
   arg("--augmentation", type=str, default="resize_only", help="select augmentation type: resize_only / light / heavy / heavy_with_rotations")  
-  arg("--resume_epoch", type=str, default=0, help="epoch from which resume model")  
+  arg("--resume_epoch", type=int, default=0, help="epoch from which resume model")  
   args = parser.parse_args()
 
   LABELS_DIR = args.labels_folder
@@ -270,7 +271,7 @@ if __name__ == "__main__":
   BATCH_SIZE = args.batch_size
   ENCODER = args.encoder
   AUGMENTATION = args.augmentation
-  RESUME_EPOCH = int(args.resume_epoch)
+  RESUME_EPOCH = args.resume_epoch
   
-  print(f' labels_folder_path: {LABELS_DIR}\n images_dir_path: {IMAGES_DIR}\n epochs: {EPOCHS}\n batch_size: {BATCH_SIZE}\n augmentation_level: {AUGMENTATION}\n encoder: {ENCODER}\n')
+  print(f' labels_folder_path: {LABELS_DIR}\n images_dir_path: {IMAGES_DIR}\n epochs: {EPOCHS}\n batch_size: {BATCH_SIZE}\n augmentation_level: {AUGMENTATION}\n encoder: {ENCODER}\n resume_epoch: {RESUME_EPOCH}\n')
   main(LABELS_DIR, IMAGES_DIR, EPOCHS, BATCH_SIZE, ENCODER, AUGMENTATION, RESUME_EPOCH)

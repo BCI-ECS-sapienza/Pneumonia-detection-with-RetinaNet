@@ -1,6 +1,6 @@
-# Neural Network for Automatic Pneumonia Detection
+# Pneumonia Detection with RetinaNet
 
-Identifying cases of Pneumonia is tedious and often leads to a disagreement between radiologists. However, computer-aided diagnosis systems showed the potential for improving diagnostic accuracy. In this work, taking inspiration from the reference paper, we replicate and build some computational approaches for pneumonia regions detection.
+Identifying cases of Pneumonia is tedious and often leads to a disagreement between radiologists. However, computer-aided diagnosis systems showed the potential for improving diagnostic accuracy. In this work, taking inspiration from the reference paper [1], we replicate and build some computational approaches for pneumonia regions detection.
 
 For the experiment documents:
 * ##### [Full report](./report.pdf)
@@ -17,16 +17,16 @@ three different classes from the associated radiological reports:
 -  The class **"No Lung Opacity / Not Normal"** illustrated data for patients with visible on CXR lung opacity regions, but without diagnosed pneumonia.
 
 
-Once preprocessed the dataset, we built a Pytorch *RetinaNet*-based model, with the following encoders:
+Once preprocessed the dataset, we built a Pytorch *RetinaNet*-based model [2], with the following encoders:
 - **resnet50:** short for Residual Networks, it is a classic neural network used as a backbone for many computer vision tasks. In this case we are usin the 50 layers version.
 - **se_resnext50:**
 - **pnasnet:**
 
 Moreover, for each encoder we tried four different augmentations:
-- **resize_only:** resize only images, no real augmentation
-- light: affine and perspective changes (scale=0.1, shear=2.5), and rotations (angle=5.0)
-- **heavy:** random horizontal flips, affine and perspective changes (scale=0.15, shear=4.0), occasional Gaussian noise, Gaussian blur, and additive noise
-- **heavy_with_rotations:** random horizontal flips, affine and perspective changes (scale=0.15, shear=4.0), rotations (angle=6.0), occasional Gaussian noise, Gaussian blur, and additive noise
+- **resize_only:** resize only images, no real augmentation.
+- **light**: affine and perspective changes (scale=0.1, shear=2.5), and rotations (angle=5.0).
+- **heavy:** random horizontal flips, affine and perspective changes (scale=0.15, shear=4.0), occasional Gaussian noise, Gaussian blur, and additive noise.
+- **heavy_with_rotations:** random horizontal flips, affine and perspective changes (scale=0.15, shear=4.0), rotations (angle=6.0), occasional Gaussian noise, Gaussian blur, and additive noise.
 
 
 ## Repository files
@@ -36,12 +36,12 @@ Moreover, for each encoder we tried four different augmentations:
 - merge_and_split_dataset.py => script to merge the input CSV files and then make train/valid/test CSVs
 
 ## How to run
-1. Download the dataset folder from [Kaggle](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data) and rename it **dataset**
+1. Download the dataset folder from [Kaggle](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/data) and rename it ```dataset```
 2. run merge_and_split_dataset.py, so that to make the ```dataset/tmp/``` folder containg the train/valid/test_labels.csv files (add ```--sample``` for a sample subset)
 3. run network/train.py to train the model with choosen encoder and augmentation. Example parameters:
-    ``` python3 network\train.py --labels_folder=dataset/tmp/ --images_folder=dataset/stage_2_train_images/ --epochs=8 --batch_size=8 --encoder=resnet50 --augmentation=resize_only ```
+    ``` python3 network/train.py --labels_folder=dataset/tmp/ --images_folder=dataset/stage_2_train_images/ --epochs=8 --batch_size=8 --encoder=resnet50 --augmentation=resize_only --resume_epoch=0```
 4. run network/test.py  to test the choosen model. Example parameters:
-    ``` python3 network\test.py --labels_folder=dataset/tmp/ --images_folder=dataset/stage_2_train_images/ --model=resnet50_resize_only --batch_size=8```
+    ``` python3 network/test.py --labels_folder=dataset/tmp/ --images_folder=dataset/stage_2_train_images/ --model=resnet50_resize_only --batch_size=8```
 
 ---
 ## Authors
@@ -51,5 +51,7 @@ Moreover, for each encoder we tried four different augmentations:
 
 
 ---
-## Reference paper
-Gabruseva, Tatiana and Poplavskiy, Dmytro and Kalinin, Alexandr A.. Deep Learning for Automatic Pneumonia Detection, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops. June, 2020
+## Reference papers
+[1] Gabruseva, Tatiana and Poplavskiy, Dmytro and Kalinin, Alexandr A.. Deep Learning for Automatic Pneumonia Detection, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops. June, 2020
+
+[2] Lin T.Y., Goyal P., Girshick R., He K., and Dollr P. Focal loss for dense object detection. IEEE International Conference on Computer Vision, page 29993007, 2017.

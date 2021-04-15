@@ -18,9 +18,9 @@ three different classes from the associated radiological reports:
 
 
 Once preprocessed the dataset, we built a Pytorch *RetinaNet*-based model [2], with the following encoders:
-- **resnet50:** short for Residual Networks, it is a classic neural network used as a backbone for many computer vision tasks. In this case we are usin the 50 layers version.
-- **se_resnext50:**
-- **pnasnet:**
+- **ResNet50:** short for Residual Networks, it is a classic neural network used as a backbone for many computer vision tasks. It is based on the idea of skip connections, or shortcuts to jump over some layers. In this case, we are using the 50 layers version.
+- **Pnasnet5:** short for Progressive Neural Architecture Search, that is based on the idea of Neural architecture search, which is a technique for automating the design of artificial neural networks. It uses a sequential model-based optimization (SMBO) strategy, that searches for structures in order of increasing complexity, while simultaneously learning a surrogate model to guide the search through structure space.
+- **Se_resnext50:** inherited from ResNet, VGG, and Inception, the basic ResNeXt includes shortcuts from the previous block to next block, stacking layers and adapting split- transform-merge strategy. Moreover, in this version we have the Squeeze-and-Excitation blocks, that adaptively recalibrates channel-wise feature responses by explicitly mod- elling interdependencies between channels. 
 
 Moreover, for each encoder we tried four different augmentations:
 - **resize_only:** resize only images, no real augmentation.

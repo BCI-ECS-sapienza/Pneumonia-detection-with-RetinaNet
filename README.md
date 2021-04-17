@@ -3,8 +3,8 @@
 Identifying cases of Pneumonia is tedious and often leads to a disagreement between radiologists. However, computer-aided diagnosis systems showed the potential for improving diagnostic accuracy. In this work, taking inspiration from the reference paper [1], we replicate and build some computational approaches for pneumonia regions detection.
 
 For the experiment documents:
-* ##### [Full report](./report.pdf)
-* ##### [Presentation slides](/slides.pdf)
+* ##### [Full report](./docs/report.pdf)
+* ##### [Presentation slides](./docs/slides.pdf)
 
 
 ## Data & methodology
@@ -20,7 +20,7 @@ three different classes from the associated radiological reports:
 Once preprocessed the dataset, we built a Pytorch *RetinaNet*-based model [2], with the following encoders:
 - **ResNet50:** short for Residual Networks, it is a classic neural network used as a backbone for many computer vision tasks. It is based on the idea of skip connections, or shortcuts to jump over some layers. In this case, we are using the 50 layers version.
 - **Pnasnet5:** short for Progressive Neural Architecture Search, that is based on the idea of Neural architecture search, which is a technique for automating the design of artificial neural networks. It uses a sequential model-based optimization (SMBO) strategy, that searches for structures in order of increasing complexity, while simultaneously learning a surrogate model to guide the search through structure space.
-- **Se_resnext50:** inherited from ResNet, VGG, and Inception, the basic ResNeXt includes shortcuts from the previous block to next block, stacking layers and adapting split- transform-merge strategy. Moreover, in this version we have the Squeeze-and-Excitation blocks, that adaptively recalibrates channel-wise feature responses by explicitly mod- elling interdependencies between channels. 
+- **Se_resnext50:** inherited from ResNet, VGG, and Inception, the basic ResNeXt includes shortcuts from the previous block to next block, stacking layers and adapting split- transform-merge strategy. Moreover, in this version we have the Squeeze-and-Excitation blocks, that adaptively recalibrates channel-wise feature responses by explicitly modelling interdependencies between channels. 
 
 Moreover, for each encoder we tried four different augmentations:
 - **resize_only:** resize only images, no real augmentation.
@@ -31,6 +31,7 @@ Moreover, for each encoder we tried four different augmentations:
 
 ## Repository files
 - network => the retinanet-based structure, the encoders, the dataloader, and so on...
+- tensorboard => the training logs 
 - Augmentation.ipynb => shows some example augmentations we are using for the model training
 - Dataset_overview.ipynb => dataset overview and statistics
 - merge_and_split_dataset.py => script to merge the input CSV files and then make train/valid/test CSVs
@@ -42,6 +43,9 @@ Moreover, for each encoder we tried four different augmentations:
     ``` python3 network/train.py --labels_folder=dataset/tmp/ --images_folder=dataset/stage_2_train_images/ --epochs=8 --batch_size=8 --encoder=resnet50 --augmentation=resize_only --resume_epoch=0```
 4. run network/test.py  to test the choosen model. Example parameters:
     ``` python3 network/test.py --labels_folder=dataset/tmp/ --images_folder=dataset/stage_2_train_images/ --model=resnet50_resize_only --batch_size=8```
+
+In case you want to visualize our results on tensorboard: 
+```python3 -m tensorboard.main --logdir=tensorboard```
 
 ---
 ## Authors
